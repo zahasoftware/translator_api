@@ -41,7 +41,18 @@ class AzureTranslationService implements TranslationService {
       'to': _langCode(targetLang),
     };
     if (sourceLang != 'auto') params['from'] = _langCode(sourceLang);
-    final uri = Uri.parse('$_endpoint/translator/text/v3.0/translate').replace(queryParameters: params);
+  // Azure Translator endpoint format:
+  //   https://{resource-name}.cognitiveservices.azure.com/translate?api-version=3.0&to=fr
+  // Global endpoint:
+  //   https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=fr
+  // Older samples occasionally show /translator/text/v3.0/translate which returns 404 now.
+  final base = _endpoint.endsWith('/translate')
+    ? _endpoint
+    : (_endpoint.endsWith('/translator/text/v3.0/translate')
+      // Normalize legacy path to modern path
+      ? _endpoint.replaceFirst('/translator/text/v3.0/translate', '/translate')
+      : '$_endpoint/translate');
+  final uri = Uri.parse(base).replace(queryParameters: params);
     final body = jsonEncode([
       {'text': text},
     ]);

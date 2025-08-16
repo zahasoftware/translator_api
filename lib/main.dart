@@ -298,7 +298,11 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _baseUrlController;
   late TextEditingController _modelController;
+  late TextEditingController _azureEndpointController;
+  late TextEditingController _azureKeyController;
+  late TextEditingController _azureRegionController;
   bool _saving = false;
+  String _provider = 'ollama';
 
   @override
   void initState() {
@@ -306,20 +310,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final provider = context.read<TranslationProvider>();
     _baseUrlController = TextEditingController(text: provider.baseUrl);
     _modelController = TextEditingController(text: provider.model);
+  _azureEndpointController = TextEditingController(text: provider.azureEndpoint);
+  _azureKeyController = TextEditingController(text: provider.azureKey);
+  _azureRegionController = TextEditingController(text: provider.azureRegion);
+  _provider = provider.providerId;
   }
 
   @override
   void dispose() {
     _baseUrlController.dispose();
     _modelController.dispose();
+  _azureEndpointController.dispose();
+  _azureKeyController.dispose();
+  _azureRegionController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     setState(() { _saving = true; });
-    await context.read<TranslationProvider>().updateSettings(
+    final tp = context.read<TranslationProvider>();
+    await tp.updateSettings(
+      providerId: _provider,
       baseUrl: _baseUrlController.text.trim(),
       model: _modelController.text.trim(),
+      azureEndpoint: _azureEndpointController.text.trim(),
+      azureKey: _azureKeyController.text.trim(),
+      azureRegion: _azureRegionController.text.trim(),
     );
     if (mounted) setState(() { _saving = false; });
     if (mounted) Navigator.of(context).pop();
@@ -332,15 +348,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
-          TextField(
-            controller: _baseUrlController,
-            decoration: const InputDecoration(labelText: 'Ollama Base URL', hintText: 'http://localhost:11434'),
+          DropdownButtonFormField<String>(
+            value: _provider,
+            items: const [
+              DropdownMenuItem(value: 'ollama', child: Text('Ollama')),
+              DropdownMenuItem(value: 'azure', child: Text('Azure Translator')),
+            ],
+            onChanged: (v) { if (v!=null) setState(() { _provider = v; }); },
+            decoration: const InputDecoration(labelText: 'Provider'),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          if (_provider == 'ollama') ...[
             TextField(
-            controller: _modelController,
-            decoration: const InputDecoration(labelText: 'Model', hintText: 'llama3'),
-          ),
+              controller: _baseUrlController,
+              decoration: const InputDecoration(labelText: 'Ollama Base URL', hintText: 'http://localhost:11434'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _modelController,
+              decoration: const InputDecoration(labelText: 'Model', hintText: 'llama3'),
+            ),
+          ] else ...[
+            TextField(
+              controller: _azureEndpointController,
+              decoration: const InputDecoration(labelText: 'Azure Endpoint', hintText: 'https://your-resource.cognitiveservices.azure.com'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _azureKeyController,
+              decoration: const InputDecoration(labelText: 'Azure Key'),
+              obscureText: true,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _azureRegionController,
+              decoration: const InputDecoration(labelText: 'Azure Region', hintText: 'global or region'),
+            ),
+          ],
           const Spacer(),
           ElevatedButton.icon(onPressed: _saving ? null : _save, icon: const Icon(Icons.save), label: _saving ? const Text('Saving...') : const Text('Save'))
         ]),

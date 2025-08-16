@@ -1,11 +1,11 @@
 # Translator App
 
-Cross‑platform (Flutter) translation UI with pluggable backends. First backend: local Ollama LLM used as a translation engine via prompt engineering.
+Cross‑platform (Flutter) translation UI with pluggable backends. Backends: local Ollama LLM (prompt engineered) and Azure Cognitive Services Translator.
 
 ## Features (current)
 * Text translation with selectable source (or auto) and target languages.
-* Persistent settings for Ollama base URL and model name.
-* Simple, responsive UI for desktop & mobile.
+* Persistent settings for provider configuration (Ollama base/model or Azure endpoint/key/region).
+* Simple, responsive UI for desktop & mobile + history + theme switching.
 * Abstraction layer (`TranslationService`) to add more providers later (e.g. DeepL, OpenAI, Gemini).
 
 ## Planned / Easy Extensions
@@ -32,6 +32,13 @@ flutter run -d windows   # or another device id
 	 ollama pull mistral
 	 ```
 4. In the app Settings set Base URL (if different) and the model name (e.g. `llama3`).
+5. Translate.
+
+## Using Azure Translator
+1. Create a Translator resource in Azure Portal.
+2. Copy Endpoint (e.g. https://YOUR_RESOURCE.cognitiveservices.azure.com), Key, and Region (often the region name or "global").
+3. Open Settings -> choose Provider: Azure Translator.
+4. Enter the values and Save.
 5. Translate.
 
 ## Add Another Provider

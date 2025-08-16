@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:translator_app/features/translation/ollama_translation_service.dart';
 import 'package:translator_app/features/translation/azure_translation_service.dart';
@@ -27,6 +28,15 @@ class TranslationProvider extends ChangeNotifier {
   String get azureRegion => _azureRegion;
   TranslationService get service => _service;
 
+  // Hotkey state (added)
+  String _sourceText = '';
+  TranslationResult? _lastResult;
+  String _defaultTargetLang = 'en';
+
+  String get sourceText => _sourceText;
+  TranslationResult? get lastResult => _lastResult;
+  String get defaultTargetLang => _defaultTargetLang;
+
   bool _initialized = false;
   bool get initialized => _initialized;
 
@@ -38,6 +48,7 @@ class TranslationProvider extends ChangeNotifier {
     _azureEndpoint = prefs.getString('azure_endpoint') ?? _azureEndpoint;
     _azureKey = prefs.getString('azure_key') ?? _azureKey;
     _azureRegion = prefs.getString('azure_region') ?? _azureRegion;
+    _defaultTargetLang = prefs.getString('default_target_lang') ?? _defaultTargetLang;
     _service = _buildService();
     _initialized = true;
     notifyListeners();
@@ -57,6 +68,7 @@ class TranslationProvider extends ChangeNotifier {
     String? azureEndpoint,
     String? azureKey,
     String? azureRegion,
+    String? defaultTargetLang,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     if (providerId != null) {
@@ -68,8 +80,48 @@ class TranslationProvider extends ChangeNotifier {
     if (azureEndpoint != null) { _azureEndpoint = azureEndpoint; await prefs.setString('azure_endpoint', azureEndpoint); }
     if (azureKey != null) { _azureKey = azureKey; await prefs.setString('azure_key', azureKey); }
     if (azureRegion != null) { _azureRegion = azureRegion; await prefs.setString('azure_region', azureRegion); }
+    if (defaultTargetLang != null) {
+      _defaultTargetLang = defaultTargetLang;
+      await prefs.setString('default_target_lang', defaultTargetLang);
+    }
     _service = _buildService();
     notifyListeners();
+  }
+
+  void setSourceText(String v) {
+    _sourceText = v;
+    notifyListeners();
+  }
+
+  Future<TranslationResult> performTranslate({
+    required String text,
+    String sourceLang = 'auto',
+    String? targetLang,
+    String? modelOverride,
+  }) async {
+    _sourceText = text;
+    notifyListeners();
+    final r = await _service.translate(
+      text: text,
+      targetLang: targetLang ?? _defaultTargetLang,
+      sourceLang: sourceLang,
+      options: TranslationOptions(model: modelOverride ?? _model),
+    );
+    _lastResult = r;
+    notifyListeners();
+    return r;
+  }
+
+  Future<TranslationResult?> translateCurrent() async {
+    if (_sourceText.trim().isEmpty) return null;
+    return performTranslate(text: _sourceText);
+  }
+
+  Future<TranslationResult?> translateFromClipboard() async {
+    final d = await Clipboard.getData('text/plain');
+    final t = d?.text?.trim() ?? '';
+    if (t.isEmpty) return null;
+    return performTranslate(text: t);
   }
 
   Future<TranslationResult> translate({

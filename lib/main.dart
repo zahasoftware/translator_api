@@ -1,26 +1,49 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:translator_app/features/translation/translation_provider.dart';
 import 'package:translator_app/features/settings/theme_provider.dart';
 import 'package:translator_app/features/history/translation_history_provider.dart';
+import 'package:translator_app/services/hotkey_activation_service.dart';
+import 'package:translator_app/services/tray_startup_provider.dart';
 
-void main() {
-  runApp(const TranslatorRoot());
-}
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    await windowManager.ensureInitialized();
+    const opts = WindowOptions(
+      size: Size(1000, 720),
+      center: true,
+      title: 'Translator',
+    );
+    windowManager.waitUntilReadyToShow(opts, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
 
-class TranslatorRoot extends StatelessWidget {
-  const TranslatorRoot({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+  final translationProvider = TranslationProvider();
+  await translationProvider.init();
+  final trayProvider = TrayStartupProvider();
+  trayProvider.attach(translationProvider);
+  await trayProvider.load();
+
+  runApp(
+    MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => TranslationProvider()..init()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
-        ChangeNotifierProvider(create: (_) => TranslationHistoryProvider()..init()),
+        ChangeNotifierProvider.value(value: translationProvider),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..load()),
+        ChangeNotifierProvider(create: (_) => TranslationHistoryProvider()..load()),
+        ChangeNotifierProvider.value(value: trayProvider),
       ],
       child: const MyApp(),
-    );
-  }
+    ),
+  );
+
+  HotkeyActivationService.instance.register(translationProvider);
 }
 
 class MyApp extends StatelessWidget {
@@ -36,6 +59,28 @@ class MyApp extends StatelessWidget {
       darkTheme: ThemeData.dark(useMaterial3: true).copyWith(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark)),
       home: const TranslatorScreen(),
     );
+  }
+}
+
+extension HotkeyActivationServiceUpdate on HotkeyActivationService {
+  void update({
+    String? newActivationKey,
+    int? newWindowMs,
+    required TranslationProvider provider,
+  }) {
+    bool changed = false;
+    if (newActivationKey != null && newActivationKey != activationKey) {
+      activationKey = newActivationKey;
+      changed = true;
+    }
+    if (newWindowMs != null && newWindowMs != sequenceWindowMs) {
+      sequenceWindowMs = newWindowMs;
+      changed = true;
+    }
+    if (changed) {
+      // Re-register or refresh hotkey binding after changes.
+      register(provider);
+    }
   }
 }
 
@@ -60,7 +105,11 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     if (text.isEmpty) return;
     setState(() { _loading = true; _error = null; });
     try {
-      final res = await provider.translate(text: text, targetLang: _targetLang, sourceLang: _sourceLang);
+      final res = await provider.performTranslate(
+        text: text,
+        targetLang: _targetLang,
+        sourceLang: _sourceLang,
+      );
       _outputController.text = res.text;
       await history.add(
         TranslationEntry(
@@ -88,6 +137,24 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<TranslationProvider>();
+
+    // --- Sync provider -> text controllers (hotkey updates) ---
+    if (provider.sourceText.isNotEmpty &&
+        provider.sourceText != _inputController.text) {
+      final atEnd = _inputController.selection.end == _inputController.text.length;
+      _inputController.text = provider.sourceText;
+      if (atEnd) {
+        _inputController.selection =
+            TextSelection.collapsed(offset: provider.sourceText.length);
+      }
+    }
+    if (provider.lastResult != null &&
+        provider.lastResult!.text.isNotEmpty &&
+        provider.lastResult!.text != _outputController.text) {
+      _outputController.text = provider.lastResult!.text;
+    }
+    // ----------------------------------------------------------
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Translator'),
@@ -112,7 +179,9 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
           ),
         ],
       ),
-      body: provider.initialized ? _buildBody() : const Center(child: CircularProgressIndicator()),
+      body: provider.initialized
+          ? _buildBody()
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -385,6 +454,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: const InputDecoration(labelText: 'Azure Region', hintText: 'global or region'),
             ),
           ],
+          const SizedBox(height: 24),
+          Text('Clipboard Hotkey', style: Theme.of(context).textTheme.titleMedium),
+          StatefulBuilder(builder: (ctx, setInner) {
+            final svc = HotkeyActivationService.instance;
+            final tp = context.read<TranslationProvider>();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Text('Activation key Ctrl+'),
+                  DropdownButton<String>(
+                    value: svc.activationKey,
+                    items: ['L','K','T','Y','H']
+                        .map((k)=>DropdownMenuItem(value:k, child: Text(k)))
+                        .toList(),
+                    onChanged: (v){
+                      if (v==null) return;
+                      svc.update(newActivationKey: v, provider: tp);
+                      setInner((){});
+                    },
+                  ),
+                  const SizedBox(width:16),
+                  Text('Window: ${svc.sequenceWindowMs} ms'),
+                ]),
+                Slider(
+                  min:500, max:6000, divisions:11,
+                  value: svc.sequenceWindowMs.toDouble(),
+                  label: '${svc.sequenceWindowMs}',
+                  onChanged:(val){
+                    svc.update(newWindowMs: val.round(), provider: tp);
+                    setInner((){});
+                  },
+                ),
+                Text('Use: Copy text (Ctrl+C) then Ctrl+${svc.activationKey} within ${svc.sequenceWindowMs} ms.')
+              ],
+            );
+          }),
           const Spacer(),
           ElevatedButton.icon(onPressed: _saving ? null : _save, icon: const Icon(Icons.save), label: _saving ? const Text('Saving...') : const Text('Save'))
         ]),

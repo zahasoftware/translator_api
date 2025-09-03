@@ -36,7 +36,8 @@ void main() async {
       providers: [
         ChangeNotifierProvider.value(value: translationProvider),
         ChangeNotifierProvider(create: (_) => ThemeProvider()..load()),
-        ChangeNotifierProvider(create: (_) => TranslationHistoryProvider()..load()),
+        ChangeNotifierProvider(
+            create: (_) => TranslationHistoryProvider()..load()),
         ChangeNotifierProvider.value(value: trayProvider),
       ],
       child: const MyApp(),
@@ -55,8 +56,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Translator',
       themeMode: themeProvider.mode,
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
-      darkTheme: ThemeData.dark(useMaterial3: true).copyWith(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark)),
+      theme:
+          ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
+      darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
+          colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue, brightness: Brightness.dark)),
       home: const TranslatorScreen(),
     );
   }
@@ -103,7 +107,10 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     final history = context.read<TranslationHistoryProvider>();
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final res = await provider.performTranslate(
         text: text,
@@ -123,7 +130,10 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     } catch (e) {
       _error = e.toString();
     } finally {
-      if (mounted) setState(() { _loading = false; });
+      if (mounted)
+        setState(() {
+          _loading = false;
+        });
     }
   }
 
@@ -141,7 +151,8 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     // --- Sync provider -> text controllers (hotkey updates) ---
     if (provider.sourceText.isNotEmpty &&
         provider.sourceText != _inputController.text) {
-      final atEnd = _inputController.selection.end == _inputController.text.length;
+      final atEnd =
+          _inputController.selection.end == _inputController.text.length;
       _inputController.text = provider.sourceText;
       if (atEnd) {
         _inputController.selection =
@@ -175,7 +186,8 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
+            onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen())),
           ),
         ],
       ),
@@ -190,7 +202,8 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
       builder: (context, constraints) {
         final wide = constraints.maxWidth > 900;
         final content = wide ? _wideLayout() : _narrowLayout();
-        return AnimatedSwitcher(duration: const Duration(milliseconds: 250), child: content);
+        return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250), child: content);
       },
     );
   }
@@ -242,7 +255,11 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
           icon: const Icon(Icons.swap_horiz),
           onPressed: () {
             if (_sourceLang == 'auto') return;
-            setState(() { final tmp = _sourceLang; _sourceLang = _targetLang; _targetLang = tmp; });
+            setState(() {
+              final tmp = _sourceLang;
+              _sourceLang = _targetLang;
+              _targetLang = tmp;
+            });
           },
         ),
         const SizedBox(width: 12),
@@ -251,7 +268,8 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     );
   }
 
-  Widget _editorCard(TextEditingController controller, String label, bool readOnly) {
+  Widget _editorCard(
+      TextEditingController controller, String label, bool readOnly) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -261,7 +279,8 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
           maxLines: null,
           expands: true,
           readOnly: readOnly,
-          decoration: InputDecoration(border: InputBorder.none, labelText: label),
+          decoration:
+              InputDecoration(border: InputBorder.none, labelText: label),
         ),
       ),
     );
@@ -269,21 +288,54 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
 
   Widget _actionRow() {
     return Row(children: [
-      ElevatedButton.icon(onPressed: _loading ? null : _doTranslate, icon: const Icon(Icons.translate), label: const Text('Translate')),
+      ElevatedButton.icon(
+          onPressed: _loading ? null : _doTranslate,
+          icon: const Icon(Icons.translate),
+          label: const Text('Translate')),
       const SizedBox(width: 12),
-      if (_loading) const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-      if (_error != null) Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+      if (_loading)
+        const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2)),
+      if (_error != null)
+        Expanded(
+            child: Text(_error!, style: const TextStyle(color: Colors.red)))
     ]);
   }
 
   Widget _langDropdown(bool source) {
-    final items = <String>['auto','English','Spanish','French','German','Italian','Portuguese','Chinese','Japanese','Korean','Arabic','Russian'];
+    final items = <String>[
+      'auto',
+      'English',
+      'Spanish',
+      'French',
+      'German',
+      'Italian',
+      'Portuguese',
+      'Chinese',
+      'Japanese',
+      'Korean',
+      'Arabic',
+      'Russian'
+    ];
     final value = source ? _sourceLang : _targetLang;
     return DropdownButtonFormField<String>(
       value: value,
-      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-      onChanged: (v) { if (v==null) return; setState(() { if (source) _sourceLang = v; else _targetLang = v; }); },
-      decoration: InputDecoration(labelText: source ? 'From' : 'To', border: const OutlineInputBorder()),
+      items:
+          items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      onChanged: (v) {
+        if (v == null) return;
+        setState(() {
+          if (source)
+            _sourceLang = v;
+          else
+            _targetLang = v;
+        });
+      },
+      decoration: InputDecoration(
+          labelText: source ? 'From' : 'To',
+          border: const OutlineInputBorder()),
     );
   }
 
@@ -295,12 +347,19 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
         title: const Text('Theme'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: ThemeMode.values.map((m) => RadioListTile<ThemeMode>(
-            title: Text(m.name),
-            value: m,
-            groupValue: themeProvider.mode,
-            onChanged: (v) { if (v!=null) { themeProvider.setMode(v); Navigator.of(context).pop(); } },
-          )).toList(),
+          children: ThemeMode.values
+              .map((m) => RadioListTile<ThemeMode>(
+                    title: Text(m.name),
+                    value: m,
+                    groupValue: themeProvider.mode,
+                    onChanged: (v) {
+                      if (v != null) {
+                        themeProvider.setMode(v);
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  ))
+              .toList(),
         ),
       ),
     );
@@ -320,18 +379,26 @@ class HistorySheet extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Text('History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('History',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.delete_forever),
                   tooltip: 'Clear',
-                  onPressed: history.entries.isEmpty ? null : () => history.clear(),
+                  onPressed:
+                      history.entries.isEmpty ? null : () => history.clear(),
                 ),
               ],
             ),
             const Divider(),
-            if (!history.loaded) const Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()),
-            if (history.loaded && history.entries.isEmpty) const Padding(padding: EdgeInsets.all(16), child: Text('No history yet.')),
+            if (!history.loaded)
+              const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator()),
+            if (history.loaded && history.entries.isEmpty)
+              const Padding(
+                  padding: EdgeInsets.all(16), child: Text('No history yet.')),
             if (history.entries.isNotEmpty)
               SizedBox(
                 height: 300,
@@ -341,8 +408,12 @@ class HistorySheet extends StatelessWidget {
                   itemBuilder: (_, i) {
                     final e = history.entries[i];
                     return ListTile(
-                      title: Text(e.resultText, maxLines: 2, overflow: TextOverflow.ellipsis),
-                      subtitle: Text('${e.sourceLang} -> ${e.targetLang}\n${e.sourceText}', maxLines: 2, overflow: TextOverflow.ellipsis),
+                      title: Text(e.resultText,
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                      subtitle: Text(
+                          '${e.sourceLang} -> ${e.targetLang}\n${e.sourceText}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
                       onTap: () {
                         Navigator.of(context).pop();
                         // Optionally: fill fields
@@ -379,24 +450,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final provider = context.read<TranslationProvider>();
     _baseUrlController = TextEditingController(text: provider.baseUrl);
     _modelController = TextEditingController(text: provider.model);
-  _azureEndpointController = TextEditingController(text: provider.azureEndpoint);
-  _azureKeyController = TextEditingController(text: provider.azureKey);
-  _azureRegionController = TextEditingController(text: provider.azureRegion);
-  _provider = provider.providerId;
+    _azureEndpointController =
+        TextEditingController(text: provider.azureEndpoint);
+    _azureKeyController = TextEditingController(text: provider.azureKey);
+    _azureRegionController = TextEditingController(text: provider.azureRegion);
+    _provider = provider.providerId;
   }
 
   @override
   void dispose() {
     _baseUrlController.dispose();
     _modelController.dispose();
-  _azureEndpointController.dispose();
-  _azureKeyController.dispose();
-  _azureRegionController.dispose();
+    _azureEndpointController.dispose();
+    _azureKeyController.dispose();
+    _azureRegionController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
-    setState(() { _saving = true; });
+    setState(() {
+      _saving = true;
+    });
     final tp = context.read<TranslationProvider>();
     await tp.updateSettings(
       providerId: _provider,
@@ -406,7 +480,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       azureKey: _azureKeyController.text.trim(),
       azureRegion: _azureRegionController.text.trim(),
     );
-    if (mounted) setState(() { _saving = false; });
+    if (mounted)
+      setState(() {
+        _saving = false;
+      });
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -423,24 +500,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
               DropdownMenuItem(value: 'ollama', child: Text('Ollama')),
               DropdownMenuItem(value: 'azure', child: Text('Azure Translator')),
             ],
-            onChanged: (v) { if (v!=null) setState(() { _provider = v; }); },
+            onChanged: (v) {
+              if (v != null)
+                setState(() {
+                  _provider = v;
+                });
+            },
             decoration: const InputDecoration(labelText: 'Provider'),
           ),
           const SizedBox(height: 16),
           if (_provider == 'ollama') ...[
             TextField(
               controller: _baseUrlController,
-              decoration: const InputDecoration(labelText: 'Ollama Base URL', hintText: 'http://localhost:11434'),
+              decoration: const InputDecoration(
+                  labelText: 'Ollama Base URL',
+                  hintText: 'http://localhost:11434'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _modelController,
-              decoration: const InputDecoration(labelText: 'Model', hintText: 'llama3'),
+              decoration:
+                  const InputDecoration(labelText: 'Model', hintText: 'llama3'),
             ),
           ] else ...[
             TextField(
               controller: _azureEndpointController,
-              decoration: const InputDecoration(labelText: 'Azure Endpoint', hintText: 'https://your-resource.cognitiveservices.azure.com'),
+              decoration: const InputDecoration(
+                  labelText: 'Azure Endpoint',
+                  hintText:
+                      'https://your-resource.cognitiveservices.azure.com'),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -451,11 +539,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _azureRegionController,
-              decoration: const InputDecoration(labelText: 'Azure Region', hintText: 'global or region'),
+              decoration: const InputDecoration(
+                  labelText: 'Azure Region', hintText: 'global or region'),
             ),
           ],
           const SizedBox(height: 24),
-          Text('Clipboard Hotkey', style: Theme.of(context).textTheme.titleMedium),
+          Text('Clipboard Hotkey',
+              style: Theme.of(context).textTheme.titleMedium),
           StatefulBuilder(builder: (ctx, setInner) {
             final svc = HotkeyActivationService.instance;
             final tp = context.read<TranslationProvider>();
@@ -466,33 +556,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text('Activation key Ctrl+'),
                   DropdownButton<String>(
                     value: svc.activationKey,
-                    items: ['L','K','T','Y','H']
-                        .map((k)=>DropdownMenuItem(value:k, child: Text(k)))
+                    items: ['T', 'K', 'L', 'Y', 'H']
+                        .map((k) => DropdownMenuItem(value: k, child: Text(k)))
                         .toList(),
-                    onChanged: (v){
-                      if (v==null) return;
+                    onChanged: (v) {
+                      if (v == null) return;
                       svc.update(newActivationKey: v, provider: tp);
-                      setInner((){});
+                      setInner(() {});
                     },
                   ),
-                  const SizedBox(width:16),
+                  const SizedBox(width: 16),
                   Text('Window: ${svc.sequenceWindowMs} ms'),
                 ]),
                 Slider(
-                  min:500, max:6000, divisions:11,
+                  min: 500,
+                  max: 6000,
+                  divisions: 11,
                   value: svc.sequenceWindowMs.toDouble(),
                   label: '${svc.sequenceWindowMs}',
-                  onChanged:(val){
+                  onChanged: (val) {
                     svc.update(newWindowMs: val.round(), provider: tp);
-                    setInner((){});
+                    setInner(() {});
                   },
                 ),
-                Text('Use: Copy text (Ctrl+C) then Ctrl+${svc.activationKey} within ${svc.sequenceWindowMs} ms.')
+                Text(
+                    'Use: Copy text (Ctrl+C) then Ctrl+${svc.activationKey} within ${svc.sequenceWindowMs} ms.')
               ],
             );
           }),
           const Spacer(),
-          ElevatedButton.icon(onPressed: _saving ? null : _save, icon: const Icon(Icons.save), label: _saving ? const Text('Saving...') : const Text('Save'))
+          ElevatedButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.save),
+              label: _saving ? const Text('Saving...') : const Text('Save'))
         ]),
       ),
     );

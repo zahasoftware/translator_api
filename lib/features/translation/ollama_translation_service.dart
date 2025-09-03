@@ -27,7 +27,10 @@ class OllamaTranslationService implements TranslationService {
     try {
       final resp = await _client.get('/api/tags');
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
-      final models = (data['models'] as List<dynamic>?)?.map((e) => e['name'] as String).toList() ?? [];
+      final models = (data['models'] as List<dynamic>?)
+              ?.map((e) => e['name'] as String)
+              .toList() ??
+          [];
       return models;
     } catch (_) {
       return [];
@@ -43,7 +46,8 @@ class OllamaTranslationService implements TranslationService {
   }) async {
     final modelToUse = options.model ?? _model;
     // Construct a concise translation prompt
-    final prompt = _buildPrompt(text: text, target: targetLang, source: sourceLang);
+    final prompt =
+        _buildPrompt(text: text, target: targetLang, source: sourceLang);
 
     final body = {
       'model': modelToUse,
@@ -57,7 +61,8 @@ class OllamaTranslationService implements TranslationService {
     return TranslationResult(text: _extractTranslation(output));
   }
 
-  String _buildPrompt({required String text, required String target, required String source}) {
+  String _buildPrompt(
+      {required String text, required String target, required String source}) {
     final srcPart = source == 'auto' ? '' : '($source)';
     return 'You are a translation engine. Translate the following text $srcPart into $target only. Do not add explanations. Text: ```$text```';
   }
@@ -72,5 +77,29 @@ class OllamaTranslationService implements TranslationService {
       }
     }
     return cleaned;
+  }
+
+  /// Improve grammar/clarity/style of the input [text] according to [style].
+  /// Returns only the improved text (no explanations).
+  Future<String> improveText({
+    required String text,
+    required String style,
+    String? model,
+  }) async {
+    final modelToUse = model ?? _model;
+    final prompt = _buildImprovePrompt(text: text, style: style);
+    final body = {
+      'model': modelToUse,
+      'prompt': prompt,
+      'stream': false,
+    };
+    final resp = await _client.postJson('/api/generate', body: body);
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    final output = (data['response'] as String? ?? '').trim();
+    return _extractTranslation(output);
+  }
+
+  String _buildImprovePrompt({required String text, required String style}) {
+    return 'You are a writing assistant. Rewrite the following text to improve grammar, clarity and correctness. Tone/style: $style. Preserve meaning. Output ONLY the improved text. Text: ```\n$text\n```';
   }
 }

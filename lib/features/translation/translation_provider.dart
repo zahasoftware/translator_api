@@ -48,7 +48,8 @@ class TranslationProvider extends ChangeNotifier {
     _azureEndpoint = prefs.getString('azure_endpoint') ?? _azureEndpoint;
     _azureKey = prefs.getString('azure_key') ?? _azureKey;
     _azureRegion = prefs.getString('azure_region') ?? _azureRegion;
-    _defaultTargetLang = prefs.getString('default_target_lang') ?? _defaultTargetLang;
+    _defaultTargetLang =
+        prefs.getString('default_target_lang') ?? _defaultTargetLang;
     _service = _buildService();
     _initialized = true;
     notifyListeners();
@@ -56,7 +57,8 @@ class TranslationProvider extends ChangeNotifier {
 
   TranslationService _buildService() {
     if (_providerId == 'azure') {
-      return AzureTranslationService(endpoint: _azureEndpoint, apiKey: _azureKey, region: _azureRegion);
+      return AzureTranslationService(
+          endpoint: _azureEndpoint, apiKey: _azureKey, region: _azureRegion);
     }
     return OllamaTranslationService(baseUrl: _baseUrl, model: _model);
   }
@@ -75,11 +77,26 @@ class TranslationProvider extends ChangeNotifier {
       _providerId = providerId;
       await prefs.setString('provider_id', providerId);
     }
-    if (baseUrl != null) { _baseUrl = baseUrl; await prefs.setString('ollama_base_url', baseUrl); }
-    if (model != null) { _model = model; await prefs.setString('ollama_model', model); }
-    if (azureEndpoint != null) { _azureEndpoint = azureEndpoint; await prefs.setString('azure_endpoint', azureEndpoint); }
-    if (azureKey != null) { _azureKey = azureKey; await prefs.setString('azure_key', azureKey); }
-    if (azureRegion != null) { _azureRegion = azureRegion; await prefs.setString('azure_region', azureRegion); }
+    if (baseUrl != null) {
+      _baseUrl = baseUrl;
+      await prefs.setString('ollama_base_url', baseUrl);
+    }
+    if (model != null) {
+      _model = model;
+      await prefs.setString('ollama_model', model);
+    }
+    if (azureEndpoint != null) {
+      _azureEndpoint = azureEndpoint;
+      await prefs.setString('azure_endpoint', azureEndpoint);
+    }
+    if (azureKey != null) {
+      _azureKey = azureKey;
+      await prefs.setString('azure_key', azureKey);
+    }
+    if (azureRegion != null) {
+      _azureRegion = azureRegion;
+      await prefs.setString('azure_region', azureRegion);
+    }
     if (defaultTargetLang != null) {
       _defaultTargetLang = defaultTargetLang;
       await prefs.setString('default_target_lang', defaultTargetLang);
@@ -137,5 +154,19 @@ class TranslationProvider extends ChangeNotifier {
       options: TranslationOptions(model: model),
     );
     return result;
+  }
+
+  /// Improve text (grammar/style) with a chosen [style] (e.g. formal, casual, friendly, business).
+  /// Returns improved text or throws if unsupported by current provider.
+  Future<String> improveText(
+      {required String text, required String style}) async {
+    if (text.trim().isEmpty) return text;
+    // Only Ollama service currently supports improvement.
+    if (_service is OllamaTranslationService) {
+      final s = _service as OllamaTranslationService;
+      return s.improveText(text: text, style: style, model: _model);
+    }
+    throw UnsupportedError(
+        'Improvement not supported for provider ${_service.id}');
   }
 }

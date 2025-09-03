@@ -9,6 +9,7 @@ import 'package:translator_app/features/settings/theme_provider.dart';
 import 'package:translator_app/features/history/translation_history_provider.dart';
 import 'package:translator_app/services/hotkey_activation_service.dart';
 import 'package:translator_app/services/tray_startup_provider.dart';
+import 'package:translator_app/features/translation/ollama_translation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -293,6 +294,14 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
           icon: const Icon(Icons.translate),
           label: const Text('Translate')),
       const SizedBox(width: 12),
+      ElevatedButton.icon(
+        onPressed: _loading
+            ? null
+            : () => _showImproveSheet(initialText: _inputController.text),
+        icon: const Icon(Icons.auto_fix_high),
+        label: const Text('Improve'),
+      ),
+      const SizedBox(width: 12),
       if (_loading)
         const SizedBox(
             width: 20,
@@ -360,6 +369,191 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                     },
                   ))
               .toList(),
+        ),
+      ),
+    );
+  }
+
+  void _showImproveSheet({required String initialText}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => ImprovementSheet(
+        initialText: initialText,
+        onApply: (improved) {
+          setState(() {
+            _inputController.text = improved;
+            _inputController.selection =
+                TextSelection.collapsed(offset: improved.length);
+          });
+        },
+      ),
+    );
+  }
+}
+
+class ImprovementSheet extends StatefulWidget {
+  const ImprovementSheet(
+      {super.key, required this.initialText, required this.onApply});
+  final String initialText;
+  final ValueChanged<String> onApply;
+  @override
+  State<ImprovementSheet> createState() => _ImprovementSheetState();
+}
+
+class _ImprovementSheetState extends State<ImprovementSheet> {
+  static const _styles = ['formal', 'casual', 'friendly', 'business'];
+  String _selected = 'formal';
+  String? _result;
+  bool _loading = false;
+  String? _error;
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _improve() async {
+    final provider = context.read<TranslationProvider>();
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+      _result = null;
+    });
+    try {
+      final improved = await provider.improveText(text: text, style: _selected);
+      if (mounted) {
+        setState(() {
+          _result = improved;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<TranslationProvider>();
+    final supports =
+        provider.service is OllamaTranslationService; // simple check
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.auto_fix_high),
+              const SizedBox(width: 8),
+              const Text('Improve Text',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close))
+            ]),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _controller,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Original Text',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              children: _styles.map((s) {
+                final selected = _selected == s;
+                return ChoiceChip(
+                  label: Text(s),
+                  selected: selected,
+                  onSelected: (v) {
+                    if (v) setState(() => _selected = s);
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            if (!supports)
+              const Text('Current provider does not support improvement.',
+                  style: TextStyle(color: Colors.orange)),
+            if (_error != null)
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+            if (_result != null)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Improved',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: Theme.of(context).colorScheme.outline),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: SelectableText(_result!),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        widget.onApply(_result!);
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.check),
+                      label: const Text('Use'),
+                    ),
+                    const SizedBox(width: 12),
+                    TextButton(
+                      onPressed: () => setState(() => _result = null),
+                      child: const Text('Refine again'),
+                    )
+                  ])
+                ],
+              ),
+            const SizedBox(height: 12),
+            Row(children: [
+              ElevatedButton.icon(
+                onPressed: !_loading && supports ? _improve : null,
+                icon: const Icon(Icons.auto_fix_normal),
+                label: _loading
+                    ? const Text('Improving...')
+                    : const Text('Improve'),
+              ),
+              const SizedBox(width: 12),
+              if (_loading)
+                const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)),
+            ]),
+          ],
         ),
       ),
     );

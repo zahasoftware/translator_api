@@ -13,9 +13,9 @@ class HotkeyActivationService {
   static final instance = HotkeyActivationService._();
 
   String activationKey = 'L';
-  int sequenceWindowMs = 3000;      // Max age of clipboard change for sequence
-  int pollIntervalMs = 350;         // Clipboard poll frequency
-  int cooldownMs = 600;             // Prevent rapid duplicate activations
+  int sequenceWindowMs = 3000; // Max age of clipboard change for sequence
+  int pollIntervalMs = 350; // Clipboard poll frequency
+  int cooldownMs = 600; // Prevent rapid duplicate activations
 
   HotKey? _activationHotKey;
   Timer? _pollTimer;
@@ -27,10 +27,13 @@ class HotkeyActivationService {
   Future<void> register(TranslationProvider provider) async {
     // Clean previous
     await _stop();
-    try { await hotKeyManager.unregisterAll(); } catch (_) {}
+    try {
+      await hotKeyManager.unregisterAll();
+    } catch (_) {}
 
     // Start polling clipboard (non-blocking)
-    _pollTimer = Timer.periodic(Duration(milliseconds: pollIntervalMs), (_) async {
+    _pollTimer =
+        Timer.periodic(Duration(milliseconds: pollIntervalMs), (_) async {
       try {
         final data = await Clipboard.getData('text/plain');
         final txt = data?.text?.trim();
@@ -49,7 +52,8 @@ class HotkeyActivationService {
     );
 
     try {
-      await hotKeyManager.register(_activationHotKey!, keyDownHandler: (_) async {
+      await hotKeyManager.register(_activationHotKey!,
+          keyDownHandler: (_) async {
         final now = DateTime.now();
         if (now.difference(_lastTrigger).inMilliseconds < cooldownMs) return;
         _lastTrigger = now;
@@ -59,7 +63,8 @@ class HotkeyActivationService {
 
         // Enforce sequence window if set (>0)
         if (_lastClipboardAt != null &&
-            now.difference(_lastClipboardAt!).inMilliseconds > sequenceWindowMs) {
+            now.difference(_lastClipboardAt!).inMilliseconds >
+                sequenceWindowMs) {
           return; // Clipboard change too old
         }
 
@@ -103,39 +108,68 @@ class HotkeyActivationService {
   Future<void> _stop() async {
     _pollTimer?.cancel();
     _pollTimer = null;
-    try { await hotKeyManager.unregisterAll(); } catch (_) {}
+    try {
+      await hotKeyManager.unregisterAll();
+    } catch (_) {}
     _activationHotKey = null;
   }
 
   LogicalKeyboardKey _mapLetterKey(String ch) {
     switch (ch.toUpperCase()) {
-      case 'A': return LogicalKeyboardKey.keyA;
-      case 'B': return LogicalKeyboardKey.keyB;
-      case 'C': return LogicalKeyboardKey.keyC;
-      case 'D': return LogicalKeyboardKey.keyD;
-      case 'E': return LogicalKeyboardKey.keyE;
-      case 'F': return LogicalKeyboardKey.keyF;
-      case 'G': return LogicalKeyboardKey.keyG;
-      case 'H': return LogicalKeyboardKey.keyH;
-      case 'I': return LogicalKeyboardKey.keyI;
-      case 'J': return LogicalKeyboardKey.keyJ;
-      case 'K': return LogicalKeyboardKey.keyK;
-      case 'L': return LogicalKeyboardKey.keyL;
-      case 'M': return LogicalKeyboardKey.keyM;
-      case 'N': return LogicalKeyboardKey.keyN;
-      case 'O': return LogicalKeyboardKey.keyO;
-      case 'P': return LogicalKeyboardKey.keyP;
-      case 'Q': return LogicalKeyboardKey.keyQ;
-      case 'R': return LogicalKeyboardKey.keyR;
-      case 'S': return LogicalKeyboardKey.keyS;
-      case 'T': return LogicalKeyboardKey.keyT;
-      case 'U': return LogicalKeyboardKey.keyU;
-      case 'V': return LogicalKeyboardKey.keyV;
-      case 'W': return LogicalKeyboardKey.keyW;
-      case 'X': return LogicalKeyboardKey.keyX;
-      case 'Y': return LogicalKeyboardKey.keyY;
-      case 'Z': return LogicalKeyboardKey.keyZ;
-      default:  return LogicalKeyboardKey.keyL;
+      case 'A':
+        return LogicalKeyboardKey.keyA;
+      case 'B':
+        return LogicalKeyboardKey.keyB;
+      case 'C':
+        return LogicalKeyboardKey.keyC;
+      case 'D':
+        return LogicalKeyboardKey.keyD;
+      case 'E':
+        return LogicalKeyboardKey.keyE;
+      case 'F':
+        return LogicalKeyboardKey.keyF;
+      case 'G':
+        return LogicalKeyboardKey.keyG;
+      case 'H':
+        return LogicalKeyboardKey.keyH;
+      case 'I':
+        return LogicalKeyboardKey.keyI;
+      case 'J':
+        return LogicalKeyboardKey.keyJ;
+      case 'K':
+        return LogicalKeyboardKey.keyK;
+      case 'L':
+        return LogicalKeyboardKey.keyL;
+      case 'M':
+        return LogicalKeyboardKey.keyM;
+      case 'N':
+        return LogicalKeyboardKey.keyN;
+      case 'O':
+        return LogicalKeyboardKey.keyO;
+      case 'P':
+        return LogicalKeyboardKey.keyP;
+      case 'Q':
+        return LogicalKeyboardKey.keyQ;
+      case 'R':
+        return LogicalKeyboardKey.keyR;
+      case 'S':
+        return LogicalKeyboardKey.keyS;
+      case 'T':
+        return LogicalKeyboardKey.keyT;
+      case 'U':
+        return LogicalKeyboardKey.keyU;
+      case 'V':
+        return LogicalKeyboardKey.keyV;
+      case 'W':
+        return LogicalKeyboardKey.keyW;
+      case 'X':
+        return LogicalKeyboardKey.keyX;
+      case 'Y':
+        return LogicalKeyboardKey.keyY;
+      case 'Z':
+        return LogicalKeyboardKey.keyZ;
+      default:
+        return LogicalKeyboardKey.keyL;
     }
   }
 }

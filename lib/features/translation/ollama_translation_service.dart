@@ -102,4 +102,26 @@ class OllamaTranslationService implements TranslationService {
   String _buildImprovePrompt({required String text, required String style}) {
     return 'You are a writing assistant. Rewrite the following text to improve grammar, clarity and correctness. Tone/style: $style. Preserve meaning. Output ONLY the improved text. Text: ```\n$text\n```';
   }
+
+  /// Choice You: Fix grammar and provide alternatives (formal, friendly, cordial).
+  Future<ChoiceYouResult> fixGrammarWithAlternatives({
+    required String text,
+    String? model,
+  }) async {
+    final modelToUse = model ?? _model;
+    final prompt = _buildChoiceYouPrompt(text: text);
+    final body = {
+      'model': modelToUse,
+      'prompt': prompt,
+      'stream': false,
+    };
+    final resp = await _client.postJson('/api/generate', body: body);
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    final raw = (data['response'] as String? ?? '').trim();
+    return ChoiceYouResult(rawOutput: raw);
+  }
+
+  String _buildChoiceYouPrompt({required String text}) {
+    return 'You are an expert editor. Fix any grammar, spelling, or clarity issues in the following text. Then provide three style alternatives: formal, friendly, and cordial. Format your response clearly with sections for: corrected text, explanation of fixes, formal version, friendly version, and cordial version. Text: ```\n$text\n```';
+  }
 }

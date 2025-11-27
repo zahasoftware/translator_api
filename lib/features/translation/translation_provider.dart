@@ -169,4 +169,18 @@ class TranslationProvider extends ChangeNotifier {
     throw UnsupportedError(
         'Improvement not supported for provider ${_service.id}');
   }
+
+  /// Choice You: Fix grammar and get alternatives (formal, friendly, cordial).
+  Future<ChoiceYouResult> fixGrammarWithAlternatives(
+      {required String text}) async {
+    if (text.trim().isEmpty) {
+      return ChoiceYouResult(rawOutput: 'No text provided.');
+    }
+    if (_service is OllamaTranslationService) {
+      final s = _service as OllamaTranslationService;
+      return s.fixGrammarWithAlternatives(text: text, model: _model);
+    }
+    throw UnsupportedError(
+        'Choice You not supported for provider ${_service.id}');
+  }
 }

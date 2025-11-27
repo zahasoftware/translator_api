@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
@@ -302,6 +303,12 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
         label: const Text('Improve'),
       ),
       const SizedBox(width: 12),
+      ElevatedButton.icon(
+        onPressed: _loading ? null : _openChoiceYouPage,
+        icon: const Icon(Icons.check_circle_outline),
+        label: const Text('Choice You'),
+      ),
+      const SizedBox(width: 12),
       if (_loading)
         const SizedBox(
             width: 20,
@@ -387,6 +394,212 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
                 TextSelection.collapsed(offset: improved.length);
           });
         },
+      ),
+    );
+  }
+
+  void _openChoiceYouPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChoiceYouScreen(
+          initialText: _inputController.text,
+          onApply: (text) {
+            setState(() {
+              _inputController.text = text;
+              _inputController.selection =
+                  TextSelection.collapsed(offset: text.length);
+            });
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class ChoiceYouScreen extends StatefulWidget {
+  const ChoiceYouScreen({
+    super.key,
+    required this.initialText,
+    required this.onApply,
+  });
+  final String initialText;
+  final ValueChanged<String> onApply;
+
+  @override
+  State<ChoiceYouScreen> createState() => _ChoiceYouScreenState();
+}
+
+class _ChoiceYouScreenState extends State<ChoiceYouScreen> {
+  late TextEditingController _inputController;
+  String? _result;
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _inputController = TextEditingController(text: widget.initialText);
+  }
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fix() async {
+    final provider = context.read<TranslationProvider>();
+    final text = _inputController.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+      _result = null;
+    });
+    try {
+      final res = await provider.fixGrammarWithAlternatives(text: text);
+      if (mounted) {
+        setState(() {
+          _result = res.rawOutput;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<TranslationProvider>();
+    final supports = provider.service is OllamaTranslationService;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Choice You - Grammar & Style'),
+        actions: [
+          if (_result != null)
+            IconButton(
+              icon: const Icon(Icons.copy),
+              tooltip: 'Copy result',
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: _result!));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Copied to clipboard')),
+                );
+              },
+            ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _inputController,
+              maxLines: 6,
+              decoration: const InputDecoration(
+                labelText: 'Input Text',
+                border: OutlineInputBorder(),
+                hintText: 'Enter text to fix grammar and get style alternatives...',
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: !_loading && supports ? _fix : null,
+                  icon: _loading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.auto_fix_high),
+                  label: Text(_loading ? 'Processing...' : 'Fix & Get Alternatives'),
+                ),
+                const SizedBox(width: 12),
+                if (!supports)
+                  const Expanded(
+                    child: Text(
+                      'Choice You not supported for current provider.',
+                      style: TextStyle(color: Colors.orange, fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_error != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  border: Border.all(color: Colors.red),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(_error!,
+                    style: const TextStyle(color: Colors.red)),
+              ),
+            if (_result != null) ...[
+              const Text('Result:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Card(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: SelectableText(
+                      _result!,
+                      style: const TextStyle(fontSize: 14, height: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      widget.onApply(_result!);
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.check),
+                    label: const Text('Use Result'),
+                  ),
+                  const SizedBox(width: 12),
+                  TextButton.icon(
+                    onPressed: () => setState(() {
+                      _result = null;
+                      _error = null;
+                    }),
+                    icon: const Icon(Icons.clear),
+                    label: const Text('Clear'),
+                  ),
+                ],
+              ),
+            ] else if (!_loading)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle_outline,
+                          size: 64, color: Colors.grey.shade400),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Enter text and click "Fix & Get Alternatives"\nto see grammar corrections and style options',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -505,7 +505,8 @@ class _ChoiceYouScreenState extends State<ChoiceYouScreen> {
               decoration: const InputDecoration(
                 labelText: 'Input Text',
                 border: OutlineInputBorder(),
-                hintText: 'Enter text to fix grammar and get style alternatives...',
+                hintText:
+                    'Enter text to fix grammar and get style alternatives...',
               ),
             ),
             const SizedBox(height: 16),
@@ -519,7 +520,8 @@ class _ChoiceYouScreenState extends State<ChoiceYouScreen> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.auto_fix_high),
-                  label: Text(_loading ? 'Processing...' : 'Fix & Get Alternatives'),
+                  label: Text(
+                      _loading ? 'Processing...' : 'Fix & Get Alternatives'),
                 ),
                 const SizedBox(width: 12),
                 if (!supports)
@@ -540,8 +542,7 @@ class _ChoiceYouScreenState extends State<ChoiceYouScreen> {
                   border: Border.all(color: Colors.red),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(_error!,
-                    style: const TextStyle(color: Colors.red)),
+                child: Text(_error!, style: const TextStyle(color: Colors.red)),
               ),
             if (_result != null) ...[
               const Text('Result:',

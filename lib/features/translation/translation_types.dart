@@ -19,5 +19,6 @@ class ImprovementResult {
 /// Result for "Choice You" feature - raw AI output.
 class ChoiceYouResult {
   ChoiceYouResult({required this.rawOutput});
-  final String rawOutput; // Raw AI model output with corrections and alternatives
+  final String
+      rawOutput; // Raw AI model output with corrections and alternatives
 }

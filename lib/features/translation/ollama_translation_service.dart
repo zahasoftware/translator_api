@@ -104,12 +104,12 @@ class OllamaTranslationService implements TranslationService {
   }
 
   /// Fix & Gramma: Fix grammar and provide alternatives (formal, friendly, cordial).
-  Future<ChoiceYouResult> fixGrammarWithAlternatives({
+  Future<FixAndGrammaResult> fixGrammarWithAlternatives({
     required String text,
     String? model,
   }) async {
     final modelToUse = model ?? _model;
-    final prompt = _buildChoiceYouPrompt(text: text);
+    final prompt = _buildFixAndGrammaPrompt(text: text);
     final body = {
       'model': modelToUse,
       'prompt': prompt,
@@ -118,10 +118,10 @@ class OllamaTranslationService implements TranslationService {
     final resp = await _client.postJson('/api/generate', body: body);
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
     final raw = (data['response'] as String? ?? '').trim();
-    return ChoiceYouResult(rawOutput: raw);
+    return FixAndGrammaResult(rawOutput: raw);
   }
 
-  String _buildChoiceYouPrompt({required String text}) {
+  String _buildFixAndGrammaPrompt({required String text}) {
     return 'You are an expert editor. Fix any grammar, spelling, or clarity issues in the following text. Then provide three style alternatives: formal, friendly, and cordial. Format your response clearly with sections for: corrected text, explanation of fixes, formal version, friendly version, and cordial version. Text: ```\n$text\n```';
   }
 }

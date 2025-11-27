@@ -318,7 +318,7 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
           label: const Text('Translate')),
       const SizedBox(width: 12),
       ElevatedButton.icon(
-        onPressed: _loading ? null : _openChoiceYouPage,
+        onPressed: _loading ? null : _openFixAndGrammaPage,
         icon: const Icon(Icons.check_circle_outline),
         label: const Text('Fix & Gramma'),
       ),
@@ -396,10 +396,10 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     );
   }
 
-  void _openChoiceYouPage() {
+  void _openFixAndGrammaPage() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ChoiceYouScreen(
+        builder: (_) => FixAndGrammaScreen(
           initialText: _inputController.text,
           onApply: (text) {
             setState(() {
@@ -414,8 +414,8 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
   }
 }
 
-class ChoiceYouScreen extends StatefulWidget {
-  const ChoiceYouScreen({
+class FixAndGrammaScreen extends StatefulWidget {
+  const FixAndGrammaScreen({
     super.key,
     required this.initialText,
     required this.onApply,
@@ -424,10 +424,10 @@ class ChoiceYouScreen extends StatefulWidget {
   final ValueChanged<String> onApply;
 
   @override
-  State<ChoiceYouScreen> createState() => _ChoiceYouScreenState();
+  State<FixAndGrammaScreen> createState() => _FixAndGrammaScreenState();
 }
 
-class _ChoiceYouScreenState extends State<ChoiceYouScreen> {
+class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
   late TextEditingController _inputController;
   String? _result;
   bool _loading = false;

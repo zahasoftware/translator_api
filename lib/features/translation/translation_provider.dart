@@ -171,10 +171,10 @@ class TranslationProvider extends ChangeNotifier {
   }
 
   /// Fix & Gramma: Fix grammar and get alternatives (formal, friendly, cordial).
-  Future<ChoiceYouResult> fixGrammarWithAlternatives(
+  Future<FixAndGrammaResult> fixGrammarWithAlternatives(
       {required String text}) async {
     if (text.trim().isEmpty) {
-      return ChoiceYouResult(rawOutput: 'No text provided.');
+      return FixAndGrammaResult(rawOutput: 'No text provided.');
     }
     if (_service is OllamaTranslationService) {
       final s = _service as OllamaTranslationService;

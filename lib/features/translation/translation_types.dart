@@ -17,8 +17,8 @@ class ImprovementResult {
 }
 
 /// Result for "Fix & Gramma" feature - raw AI output.
-class ChoiceYouResult {
-  ChoiceYouResult({required this.rawOutput});
+class FixAndGrammaResult {
+  FixAndGrammaResult({required this.rawOutput});
   final String
       rawOutput; // Raw AI model output with corrections and alternatives
 }

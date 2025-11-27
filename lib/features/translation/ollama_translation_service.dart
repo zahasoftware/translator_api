@@ -103,7 +103,7 @@ class OllamaTranslationService implements TranslationService {
     return 'You are a writing assistant. Rewrite the following text to improve grammar, clarity and correctness. Tone/style: $style. Preserve meaning. Output ONLY the improved text. Text: ```\n$text\n```';
   }
 
-  /// Choice You: Fix grammar and provide alternatives (formal, friendly, cordial).
+  /// Fix & Gramma: Fix grammar and provide alternatives (formal, friendly, cordial).
   Future<ChoiceYouResult> fixGrammarWithAlternatives({
     required String text,
     String? model,

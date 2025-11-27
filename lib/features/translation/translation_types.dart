@@ -16,7 +16,7 @@ class ImprovementResult {
   final String explanation; // Rationale of key changes
 }
 
-/// Result for "Choice You" feature - raw AI output.
+/// Result for "Fix & Gramma" feature - raw AI output.
 class ChoiceYouResult {
   ChoiceYouResult({required this.rawOutput});
   final String

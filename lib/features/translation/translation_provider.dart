@@ -170,7 +170,7 @@ class TranslationProvider extends ChangeNotifier {
         'Improvement not supported for provider ${_service.id}');
   }
 
-  /// Choice You: Fix grammar and get alternatives (formal, friendly, cordial).
+  /// Fix & Gramma: Fix grammar and get alternatives (formal, friendly, cordial).
   Future<ChoiceYouResult> fixGrammarWithAlternatives(
       {required String text}) async {
     if (text.trim().isEmpty) {
@@ -181,6 +181,6 @@ class TranslationProvider extends ChangeNotifier {
       return s.fixGrammarWithAlternatives(text: text, model: _model);
     }
     throw UnsupportedError(
-        'Choice You not supported for provider ${_service.id}');
+        'Fix & Gramma not supported for provider ${_service.id}');
   }
 }

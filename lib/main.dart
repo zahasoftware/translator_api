@@ -6,6 +6,7 @@ import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:translator_app/features/translation/translation_provider.dart';
 import 'package:translator_app/features/settings/theme_provider.dart';
 import 'package:translator_app/features/history/translation_history_provider.dart';
@@ -117,6 +118,10 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
       _sourceLang = prefs.getString('source_lang') ?? 'auto';
       _targetLang = prefs.getString('target_lang') ?? 'English';
     });
+    if (mounted) {
+      final provider = context.read<TranslationProvider>();
+      provider.setLanguages(sourceLang: _sourceLang, targetLang: _targetLang);
+    }
   }
 
   Future<void> _saveLanguagePreferences() async {
@@ -283,6 +288,9 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
               _sourceLang = _targetLang;
               _targetLang = tmp;
             });
+            _saveLanguagePreferences();
+            final provider = context.read<TranslationProvider>();
+            provider.setLanguages(sourceLang: _sourceLang, targetLang: _targetLang);
           },
         ),
         const SizedBox(width: 12),
@@ -363,6 +371,12 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
             _targetLang = v;
         });
         _saveLanguagePreferences();
+        final provider = context.read<TranslationProvider>();
+        if (source) {
+          provider.setLanguages(sourceLang: v);
+        } else {
+          provider.setLanguages(targetLang: v);
+        }
       },
       decoration: InputDecoration(
           labelText: source ? 'From' : 'To',
@@ -401,6 +415,7 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
       MaterialPageRoute(
         builder: (_) => FixAndGrammaScreen(
           initialText: _inputController.text,
+          autoFix: true,
           onApply: (text) {
             setState(() {
               _inputController.text = text;
@@ -419,9 +434,11 @@ class FixAndGrammaScreen extends StatefulWidget {
     super.key,
     required this.initialText,
     required this.onApply,
+    this.autoFix = false,
   });
   final String initialText;
   final ValueChanged<String> onApply;
+  final bool autoFix;
 
   @override
   State<FixAndGrammaScreen> createState() => _FixAndGrammaScreenState();
@@ -437,6 +454,9 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
   void initState() {
     super.initState();
     _inputController = TextEditingController(text: widget.initialText);
+    if (widget.autoFix) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fix());
+    }
   }
 
   @override
@@ -548,11 +568,19 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
               const SizedBox(height: 8),
               Expanded(
                 child: Card(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: SelectableText(
-                      _result!,
-                      style: const TextStyle(fontSize: 14, height: 1.5),
+                  child: Markdown(
+                    data: _result!,
+                    selectable: true,
+                    styleSheet: MarkdownStyleSheet(
+                      p: const TextStyle(fontSize: 14, height: 1.5),
+                      code: TextStyle(
+                        backgroundColor: Colors.grey.shade200,
+                        fontFamily: 'monospace',
+                      ),
+                      codeblockDecoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
                   ),
                 ),

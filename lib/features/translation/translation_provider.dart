@@ -33,9 +33,15 @@ class TranslationProvider extends ChangeNotifier {
   TranslationResult? _lastResult;
   String _defaultTargetLang = 'en';
 
+  // Active UI language selections (kept in sync with the dropdowns)
+  String _sourceLang = 'auto';
+  String _targetLang = 'English';
+
   String get sourceText => _sourceText;
   TranslationResult? get lastResult => _lastResult;
   String get defaultTargetLang => _defaultTargetLang;
+  String get sourceLang => _sourceLang;
+  String get targetLang => _targetLang;
 
   bool _initialized = false;
   bool get initialized => _initialized;
@@ -50,6 +56,8 @@ class TranslationProvider extends ChangeNotifier {
     _azureRegion = prefs.getString('azure_region') ?? _azureRegion;
     _defaultTargetLang =
         prefs.getString('default_target_lang') ?? _defaultTargetLang;
+    _sourceLang = prefs.getString('source_lang') ?? _sourceLang;
+    _targetLang = prefs.getString('target_lang') ?? _targetLang;
     _service = _buildService();
     _initialized = true;
     notifyListeners();
@@ -107,6 +115,12 @@ class TranslationProvider extends ChangeNotifier {
 
   void setSourceText(String v) {
     _sourceText = v;
+    notifyListeners();
+  }
+
+  void setLanguages({String? sourceLang, String? targetLang}) {
+    if (sourceLang != null) _sourceLang = sourceLang;
+    if (targetLang != null) _targetLang = targetLang;
     notifyListeners();
   }
 

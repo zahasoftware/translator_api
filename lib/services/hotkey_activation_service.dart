@@ -72,7 +72,11 @@ class HotkeyActivationService {
         await windowManager.focus();
 
         provider.setSourceText(txt);
-        await provider.performTranslate(text: txt);
+        await provider.performTranslate(
+          text: txt,
+          sourceLang: provider.sourceLang,
+          targetLang: provider.targetLang,
+        );
       });
     } catch (e) {
       if (kDebugMode) {

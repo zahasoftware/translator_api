@@ -290,7 +290,8 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
             });
             _saveLanguagePreferences();
             final provider = context.read<TranslationProvider>();
-            provider.setLanguages(sourceLang: _sourceLang, targetLang: _targetLang);
+            provider.setLanguages(
+                sourceLang: _sourceLang, targetLang: _targetLang);
           },
         ),
         const SizedBox(width: 12),

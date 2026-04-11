@@ -451,6 +451,7 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
   String? _result;
   bool _loading = false;
   String? _error;
+  TranslationProvider? _providerRef;
 
   @override
   void initState() {
@@ -459,10 +460,29 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
     if (widget.autoFix) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _fix());
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _providerRef = context.read<TranslationProvider>();
+        _providerRef!.addListener(_onProviderChanged);
+      }
+    });
+  }
+
+  void _onProviderChanged() {
+    if (!mounted) return;
+    final newText = _providerRef?.sourceText ?? '';
+    if (newText.isNotEmpty && newText != _inputController.text) {
+      setState(() {
+        _inputController.text = newText;
+        _inputController.selection =
+            TextSelection.collapsed(offset: newText.length);
+      });
+    }
   }
 
   @override
   void dispose() {
+    _providerRef?.removeListener(_onProviderChanged);
     _inputController.dispose();
     super.dispose();
   }

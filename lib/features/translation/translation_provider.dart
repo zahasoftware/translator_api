@@ -62,7 +62,8 @@ class TranslationProvider extends ChangeNotifier {
         prefs.getString('default_target_lang') ?? _defaultTargetLang;
     _sourceLang = prefs.getString('source_lang') ?? _sourceLang;
     _targetLang = prefs.getString('target_lang') ?? _targetLang;
-    _fixAndGrammaAutoRun = prefs.getBool('fix_gramma_auto_run') ?? _fixAndGrammaAutoRun;
+    _fixAndGrammaAutoRun =
+        prefs.getBool('fix_gramma_auto_run') ?? _fixAndGrammaAutoRun;
     _service = _buildService();
     _initialized = true;
     notifyListeners();

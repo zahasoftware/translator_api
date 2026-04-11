@@ -412,11 +412,12 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
   }
 
   void _openFixAndGrammaPage() {
+    final provider = context.read<TranslationProvider>();
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => FixAndGrammaScreen(
           initialText: _inputController.text,
-          autoFix: true,
+          autoFix: provider.fixAndGrammaAutoRun,
           onApply: (text) {
             setState(() {
               _inputController.text = text;
@@ -810,6 +811,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   labelText: 'Azure Region', hintText: 'global or region'),
             ),
           ],
+          const SizedBox(height: 24),
+          StatefulBuilder(builder: (ctx, setInner) {
+            final tp = context.read<TranslationProvider>();
+            return SwitchListTile(
+              title: const Text('Auto-run Fix & Gramma'),
+              subtitle: const Text(
+                  'When enabled, clicking the button immediately runs the fix. When disabled, it only opens the page.'),
+              value: tp.fixAndGrammaAutoRun,
+              onChanged: (v) async {
+                await tp.setFixAndGrammaAutoRun(v);
+                setInner(() {});
+              },
+            );
+          }),
           const SizedBox(height: 24),
           Text('Clipboard Hotkey',
               style: Theme.of(context).textTheme.titleMedium),

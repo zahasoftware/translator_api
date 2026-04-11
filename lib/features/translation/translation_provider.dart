@@ -37,11 +37,15 @@ class TranslationProvider extends ChangeNotifier {
   String _sourceLang = 'auto';
   String _targetLang = 'English';
 
+  // Fix & Gramma behaviour
+  bool _fixAndGrammaAutoRun = true;
+
   String get sourceText => _sourceText;
   TranslationResult? get lastResult => _lastResult;
   String get defaultTargetLang => _defaultTargetLang;
   String get sourceLang => _sourceLang;
   String get targetLang => _targetLang;
+  bool get fixAndGrammaAutoRun => _fixAndGrammaAutoRun;
 
   bool _initialized = false;
   bool get initialized => _initialized;
@@ -58,6 +62,7 @@ class TranslationProvider extends ChangeNotifier {
         prefs.getString('default_target_lang') ?? _defaultTargetLang;
     _sourceLang = prefs.getString('source_lang') ?? _sourceLang;
     _targetLang = prefs.getString('target_lang') ?? _targetLang;
+    _fixAndGrammaAutoRun = prefs.getBool('fix_gramma_auto_run') ?? _fixAndGrammaAutoRun;
     _service = _buildService();
     _initialized = true;
     notifyListeners();
@@ -69,6 +74,14 @@ class TranslationProvider extends ChangeNotifier {
           endpoint: _azureEndpoint, apiKey: _azureKey, region: _azureRegion);
     }
     return OllamaTranslationService(baseUrl: _baseUrl, model: _model);
+  }
+
+  Future<void> setFixAndGrammaAutoRun(bool value) async {
+    if (_fixAndGrammaAutoRun == value) return;
+    _fixAndGrammaAutoRun = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('fix_gramma_auto_run', value);
+    notifyListeners();
   }
 
   Future<void> updateSettings({

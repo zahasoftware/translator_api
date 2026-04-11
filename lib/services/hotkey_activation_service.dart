@@ -124,12 +124,16 @@ class HotkeyActivationService {
     if (!await windowManager.isVisible()) await windowManager.show();
     await windowManager.focus();
 
-    provider.setSourceText(txt);
-    await provider.performTranslate(
-      text: txt,
-      sourceLang: provider.sourceLang,
-      targetLang: provider.targetLang,
-    );
+    if (provider.activeScreen == ActiveScreen.fixAndGramma) {
+      provider.triggerFixAndGramma(txt);
+    } else {
+      provider.setSourceText(txt);
+      await provider.performTranslate(
+        text: txt,
+        sourceLang: provider.sourceLang,
+        targetLang: provider.targetLang,
+      );
+    }
   }
 
   /// Called every [_watchdogIntervalMs] ms to silently re-register the hotkey

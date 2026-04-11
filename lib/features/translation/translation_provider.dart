@@ -6,6 +6,8 @@ import 'package:translator_app/features/translation/azure_translation_service.da
 import 'package:translator_app/features/translation/translation_service.dart';
 import 'package:translator_app/features/translation/translation_types.dart';
 
+enum ActiveScreen { translator, fixAndGramma }
+
 class TranslationProvider extends ChangeNotifier {
   TranslationProvider();
 
@@ -40,12 +42,30 @@ class TranslationProvider extends ChangeNotifier {
   // Fix & Gramma behaviour
   bool _fixAndGrammaAutoRun = true;
 
+  // Active screen tracking for hotkey routing
+  ActiveScreen _activeScreen = ActiveScreen.translator;
+  int _fixAndGrammaTriggerCount = 0;
+
   String get sourceText => _sourceText;
   TranslationResult? get lastResult => _lastResult;
   String get defaultTargetLang => _defaultTargetLang;
   String get sourceLang => _sourceLang;
   String get targetLang => _targetLang;
   bool get fixAndGrammaAutoRun => _fixAndGrammaAutoRun;
+  ActiveScreen get activeScreen => _activeScreen;
+  int get fixAndGrammaTriggerCount => _fixAndGrammaTriggerCount;
+
+  void setActiveScreen(ActiveScreen screen) {
+    if (_activeScreen == screen) return;
+    _activeScreen = screen;
+    notifyListeners();
+  }
+
+  void triggerFixAndGramma(String text) {
+    _sourceText = text;
+    _fixAndGrammaTriggerCount++;
+    notifyListeners();
+  }
 
   bool _initialized = false;
   bool get initialized => _initialized;

@@ -452,6 +452,7 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
   bool _loading = false;
   String? _error;
   TranslationProvider? _providerRef;
+  int _lastFixTriggerCount = 0;
 
   @override
   void initState() {
@@ -463,14 +464,19 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _providerRef = context.read<TranslationProvider>();
+        _lastFixTriggerCount = _providerRef!.fixAndGrammaTriggerCount;
         _providerRef!.addListener(_onProviderChanged);
+        _providerRef!.setActiveScreen(ActiveScreen.fixAndGramma);
       }
     });
   }
 
   void _onProviderChanged() {
     if (!mounted) return;
-    final newText = _providerRef?.sourceText ?? '';
+    final provider = _providerRef!;
+
+    // Update input text when sourceText changes via hotkey
+    final newText = provider.sourceText;
     if (newText.isNotEmpty && newText != _inputController.text) {
       setState(() {
         _inputController.text = newText;
@@ -478,11 +484,18 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
             TextSelection.collapsed(offset: newText.length);
       });
     }
+
+    // Run fix when hotkey triggers it
+    if (provider.fixAndGrammaTriggerCount != _lastFixTriggerCount) {
+      _lastFixTriggerCount = provider.fixAndGrammaTriggerCount;
+      _fix();
+    }
   }
 
   @override
   void dispose() {
     _providerRef?.removeListener(_onProviderChanged);
+    _providerRef?.setActiveScreen(ActiveScreen.translator);
     _inputController.dispose();
     super.dispose();
   }

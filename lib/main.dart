@@ -457,6 +457,7 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
   @override
   void initState() {
     super.initState();
+    // Use initial text only if provider has no saved input yet
     _inputController = TextEditingController(text: widget.initialText);
     if (widget.autoFix) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _fix());
@@ -465,6 +466,19 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
       if (mounted) {
         _providerRef = context.read<TranslationProvider>();
         _lastFixTriggerCount = _providerRef!.fixAndGrammaTriggerCount;
+
+        // Restore persisted state
+        final savedInput = _providerRef!.fixAndGrammaInput;
+        final savedResult = _providerRef!.fixAndGrammaResult;
+        if (savedInput.isNotEmpty) {
+          _inputController.text = savedInput;
+          _inputController.selection =
+              TextSelection.collapsed(offset: savedInput.length);
+        }
+        if (savedResult != null) {
+          setState(() => _result = savedResult);
+        }
+
         _providerRef!.addListener(_onProviderChanged);
         _providerRef!.setActiveScreen(ActiveScreen.fixAndGramma);
       }
@@ -494,6 +508,12 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
 
   @override
   void dispose() {
+    // Persist current state before leaving
+    _providerRef?.setFixAndGrammaState(
+      input: _inputController.text,
+      result: _result,
+      clearResult: _result == null,
+    );
     _providerRef?.removeListener(_onProviderChanged);
     _providerRef?.setActiveScreen(ActiveScreen.translator);
     _inputController.dispose();
@@ -515,6 +535,7 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
         setState(() {
           _result = res.rawOutput;
         });
+        _providerRef?.setFixAndGrammaState(input: text, result: res.rawOutput);
       }
     } catch (e) {
       setState(() {
@@ -555,6 +576,7 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
             TextField(
               controller: _inputController,
               maxLines: 6,
+              onChanged: (v) => _providerRef?.setFixAndGrammaState(input: v),
               decoration: const InputDecoration(
                 labelText: 'Input Text',
                 border: OutlineInputBorder(),
@@ -633,10 +655,13 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
                   ),
                   const SizedBox(width: 12),
                   TextButton.icon(
-                    onPressed: () => setState(() {
-                      _result = null;
-                      _error = null;
-                    }),
+                    onPressed: () {
+                      setState(() {
+                        _result = null;
+                        _error = null;
+                      });
+                      _providerRef?.setFixAndGrammaState(clearResult: true);
+                    },
                     icon: const Icon(Icons.clear),
                     label: const Text('Clear'),
                   ),

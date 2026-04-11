@@ -46,6 +46,10 @@ class TranslationProvider extends ChangeNotifier {
   ActiveScreen _activeScreen = ActiveScreen.translator;
   int _fixAndGrammaTriggerCount = 0;
 
+  // Fix & Gramma persisted state (survives navigation)
+  String _fixAndGrammaInput = '';
+  String? _fixAndGrammaResult;
+
   String get sourceText => _sourceText;
   TranslationResult? get lastResult => _lastResult;
   String get defaultTargetLang => _defaultTargetLang;
@@ -54,6 +58,18 @@ class TranslationProvider extends ChangeNotifier {
   bool get fixAndGrammaAutoRun => _fixAndGrammaAutoRun;
   ActiveScreen get activeScreen => _activeScreen;
   int get fixAndGrammaTriggerCount => _fixAndGrammaTriggerCount;
+  String get fixAndGrammaInput => _fixAndGrammaInput;
+  String? get fixAndGrammaResult => _fixAndGrammaResult;
+
+  void setFixAndGrammaState({String? input, String? result, bool clearResult = false}) {
+    if (input != null) _fixAndGrammaInput = input;
+    if (clearResult) {
+      _fixAndGrammaResult = null;
+    } else if (result != null) {
+      _fixAndGrammaResult = result;
+    }
+    // No notifyListeners — caller manages UI state directly
+  }
 
   void setActiveScreen(ActiveScreen screen) {
     if (_activeScreen == screen) return;

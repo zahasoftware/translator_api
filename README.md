@@ -8,12 +8,58 @@ Cross‑platform (Flutter) translation UI with pluggable backends. Backends: loc
 * Simple, responsive UI for desktop & mobile + history + theme switching.
 * Abstraction layer (`TranslationService`) to add more providers later (e.g. DeepL, OpenAI, Gemini).
 
+## Screenshots
+The images below show the main desktop workflow: translation, provider configuration, and grammar improvement.
+
+### Translator Screen
+The main view lets you select source and target languages, paste or type content, and review the translated output side by side.
+
+![Translator screen](image/translator-screen.png)
+
+### Settings Screen
+The settings page is used to switch providers, configure the Ollama connection, and adjust the clipboard hotkey behavior.
+
+![Settings screen](image/config-screen.png)
+
+### Fix & Gramma Screen
+The Fix & Gramma page improves the original text, explains the corrections, and provides a cleaned-up result ready to reuse.
+
+![Fix & Gramma screen](image/fix-gramar-screen.png)
+
 ## Planned / Easy Extensions
 * Streaming translation output.
 * Model auto‑detection & caching model list.
 * Multi‑segment / document translation.
 * Offline queue & history.
 * Glossary / custom dictionary.
+
+## Install from GitHub
+You can use the project directly from GitHub in two ways: clone the source code to run it locally, or download a packaged Windows build from GitHub Releases if one is available.
+
+### Option 1: Clone and Run from Source
+Use this option if you want to develop, test, or build the app yourself.
+
+```
+git clone https://github.com/zahasoftware/translator_api.git
+cd translator_api
+flutter pub get
+flutter run -d windows
+```
+
+Requirements:
+1. Git installed.
+2. Flutter with Windows desktop support enabled.
+3. Visual Studio with the Desktop development with C++ workload.
+
+### Option 2: Download a Windows Build from GitHub Releases
+Use this option if you only want to run the app without building it locally.
+
+1. Open the Releases page: https://github.com/zahasoftware/translator_api/releases
+2. Download the latest Windows release asset, usually a `.zip` package.
+3. Extract the archive to a local folder.
+4. Open the extracted folder and run `translator_app.exe`.
+
+Important: if the release contains a `Release` folder, keep all files together. Do not move only the `.exe`, because the application also needs the bundled DLLs and Flutter data files.
 
 ## Run the App
 Ensure you have Flutter installed.

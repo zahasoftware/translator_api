@@ -40,8 +40,8 @@ You can use the project directly from GitHub in two ways: clone the source code 
 Use this option if you want to develop, test, or build the app yourself.
 
 ```
-git clone https://github.com/zahasoftware/translator_api.git
-cd translator_api
+git clone https://github.com/zahasoftware/translator_app.git
+cd translator_app
 flutter pub get
 flutter run -d windows
 ```
@@ -51,10 +51,17 @@ Requirements:
 2. Flutter with Windows desktop support enabled.
 3. Visual Studio with the Desktop development with C++ workload.
 
+If you already cloned the repository before it was renamed, update the remote URL:
+
+```
+git remote set-url origin https://github.com/zahasoftware/translator_app.git
+git remote -v
+```
+
 ### Option 2: Download a Windows Build from GitHub Releases
 Use this option if you only want to run the app without building it locally.
 
-1. Open the Releases page: https://github.com/zahasoftware/translator_api/releases
+1. Open the Releases page: https://github.com/zahasoftware/translator_app/releases
 2. Download the latest Windows release asset, usually a `.zip` package.
 3. Extract the archive to a local folder.
 4. Open the extracted folder and run `translator_app.exe`.

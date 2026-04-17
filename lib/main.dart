@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -158,10 +157,11 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
     } catch (e) {
       _error = e.toString();
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
         });
+      }
     }
   }
 
@@ -364,12 +364,15 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
       items:
           items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       onChanged: (v) {
-        if (v == null) return;
+        if (v == null) {
+          return;
+        }
         setState(() {
-          if (source)
+          if (source) {
             _sourceLang = v;
-          else
+          } else {
             _targetLang = v;
+          }
         });
         _saveLanguagePreferences();
         final provider = context.read<TranslationProvider>();
@@ -806,11 +809,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       azureKey: _azureKeyController.text.trim(),
       azureRegion: _azureRegionController.text.trim(),
     );
-    if (mounted)
+    if (mounted) {
       setState(() {
         _saving = false;
       });
-    if (mounted) Navigator.of(context).pop();
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -827,10 +831,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               DropdownMenuItem(value: 'azure', child: Text('Azure Translator')),
             ],
             onChanged: (v) {
-              if (v != null)
+              if (v != null) {
                 setState(() {
                   _provider = v;
                 });
+              }
             },
             decoration: const InputDecoration(labelText: 'Provider'),
           ),

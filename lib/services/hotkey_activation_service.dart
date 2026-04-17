@@ -6,7 +6,8 @@ import 'package:window_manager/window_manager.dart';
 import '../features/translation/translation_provider.dart';
 
 /// Clipboard polling (no Ctrl+C hook). User copies with Ctrl+C normally, then
-/// presses Ctrl+<activationKey> (default L) to translate the most recent
+/// presses Ctrl plus the configured activation key (default `L`) to translate
+/// the most recent
 /// clipboard text.
 ///
 /// Reliability improvements:
@@ -85,9 +86,13 @@ class HotkeyActivationService {
         _activationHotKey!,
         keyDownHandler: (_) => _onHotkeyFired(provider),
       );
-      if (kDebugMode) debugPrint('[Hotkey] Registered Ctrl+$activationKey');
+      if (kDebugMode) {
+        debugPrint('[Hotkey] Registered Ctrl+$activationKey');
+      }
     } catch (e) {
-      if (kDebugMode) debugPrint('[Hotkey] Registration failed: $e');
+      if (kDebugMode) {
+        debugPrint('[Hotkey] Registration failed: $e');
+      }
     }
   }
 
@@ -140,9 +145,12 @@ class HotkeyActivationService {
   /// in case Windows silently dropped the registration.
   void _watchdog() {
     final p = _provider;
-    if (p == null) return;
-    if (kDebugMode)
+    if (p == null) {
+      return;
+    }
+    if (kDebugMode) {
       debugPrint('[Hotkey] Watchdog re-registering Ctrl+$activationKey');
+    }
     _registerHotkey(p); // async fire-and-forget; errors are swallowed inside
   }
 

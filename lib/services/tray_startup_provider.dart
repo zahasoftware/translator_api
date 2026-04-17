@@ -121,8 +121,8 @@ class TrayStartupProvider extends ChangeNotifier
 
   // Tray menu actions
   @override
-  void onTrayMenuItemClick(MenuItem item) async {
-    switch (item.label) {
+  void onTrayMenuItemClick(MenuItem menuItem) async {
+    switch (menuItem.label) {
       case 'Show':
         if (!await windowManager.isVisible()) await windowManager.show();
         await windowManager.focus();

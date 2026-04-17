@@ -12,15 +12,12 @@ class OllamaTranslationService implements TranslationService {
         _model = model ?? 'llama3';
 
   final ApiClient _client;
-  String _model;
+  final String _model;
 
   @override
   String get id => 'ollama';
   @override
   String get label => 'Ollama (Local LLM)';
-
-  set model(String value) => _model = value;
-  String get model => _model;
 
   @override
   Future<List<String>> listModels() async {

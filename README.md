@@ -51,12 +51,6 @@ Requirements:
 2. Flutter with Windows desktop support enabled.
 3. Visual Studio with the Desktop development with C++ workload.
 
-If you already cloned the repository before it was renamed, update the remote URL:
-
-```
-git remote set-url origin https://github.com/zahasoftware/translator_app.git
-git remote -v
-```
 
 ### Option 2: Download a Windows Build from GitHub Releases
 Use this option if you only want to run the app without building it locally.

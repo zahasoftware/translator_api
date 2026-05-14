@@ -457,10 +457,17 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
   TranslationProvider? _providerRef;
   int _lastFixTriggerCount = 0;
 
+  void _copyResultToClipboard() {
+    if (_result == null) return;
+    Clipboard.setData(ClipboardData(text: _result!));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Copied full result to clipboard')),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    // Use initial text only if provider has no saved input yet
     _inputController = TextEditingController(text: widget.initialText);
     if (widget.autoFix) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _fix());
@@ -470,7 +477,6 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
         _providerRef = context.read<TranslationProvider>();
         _lastFixTriggerCount = _providerRef!.fixAndGrammaTriggerCount;
 
-        // Restore persisted state
         final savedInput = _providerRef!.fixAndGrammaInput;
         final savedResult = _providerRef!.fixAndGrammaResult;
         if (savedInput.isNotEmpty) {
@@ -492,7 +498,6 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
     if (!mounted) return;
     final provider = _providerRef!;
 
-    // Update input text when sourceText changes via hotkey
     final newText = provider.sourceText;
     if (newText.isNotEmpty && newText != _inputController.text) {
       setState(() {
@@ -502,7 +507,6 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
       });
     }
 
-    // Run fix when hotkey triggers it
     if (provider.fixAndGrammaTriggerCount != _lastFixTriggerCount) {
       _lastFixTriggerCount = provider.fixAndGrammaTriggerCount;
       _fix();
@@ -511,7 +515,6 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
 
   @override
   void dispose() {
-    // Persist current state before leaving
     _providerRef?.setFixAndGrammaState(
       input: _inputController.text,
       result: _result,
@@ -561,13 +564,8 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
           if (_result != null)
             IconButton(
               icon: const Icon(Icons.copy),
-              tooltip: 'Copy result',
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: _result!));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Copied to clipboard')),
-                );
-              },
+              tooltip: 'Copy all result',
+              onPressed: _copyResultToClipboard,
             ),
         ],
       ),
@@ -596,10 +594,12 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2))
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Icon(Icons.auto_fix_high),
                   label: Text(
-                      _loading ? 'Processing...' : 'Fix & Get Alternatives'),
+                    _loading ? 'Processing...' : 'Fix & Get Alternatives',
+                  ),
                 ),
                 const SizedBox(width: 12),
                 if (!supports)
@@ -623,31 +623,75 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
                 child: Text(_error!, style: const TextStyle(color: Colors.red)),
               ),
             if (_result != null) ...[
-              const Text('Result:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text(
+                'Result:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               const SizedBox(height: 8),
               Expanded(
                 child: Card(
-                  child: Markdown(
-                    data: _result!,
-                    selectable: true,
-                    styleSheet: MarkdownStyleSheet(
-                      p: const TextStyle(fontSize: 14, height: 1.5),
-                      code: TextStyle(
-                        backgroundColor: Colors.grey.shade200,
-                        fontFamily: 'monospace',
-                      ),
-                      codeblockDecoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
+                  child: Builder(
+                    builder: (context) {
+                      final theme = Theme.of(context);
+                      final isDark = theme.brightness == Brightness.dark;
+                      final bodyColor = theme.colorScheme.onSurface;
+                      final codeFg = Colors.black87;
+                      final codeBg = isDark
+                          ? const Color(0xFFE3E7EC)
+                          : const Color(0xFFF2F4F7);
+                      final selectionBg = isDark
+                          ? const Color(0x6690CAF9)
+                          : const Color(0x80BBDEFB);
+
+                      return Theme(
+                        data: theme.copyWith(
+                          textSelectionTheme: TextSelectionThemeData(
+                            selectionColor: selectionBg,
+                            cursorColor: theme.colorScheme.primary,
+                            selectionHandleColor: theme.colorScheme.primary,
+                          ),
+                        ),
+                        child: Markdown(
+                          data: _result!,
+                          selectable: true,
+                          styleSheet: MarkdownStyleSheet(
+                            p: TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                              color: bodyColor,
+                            ),
+                            h1: TextStyle(color: bodyColor),
+                            h2: TextStyle(color: bodyColor),
+                            h3: TextStyle(color: bodyColor),
+                            strong: TextStyle(color: bodyColor),
+                            em: TextStyle(color: bodyColor),
+                            listBullet: TextStyle(color: bodyColor),
+                            blockquote: TextStyle(color: bodyColor),
+                            code: TextStyle(
+                              color: codeFg,
+                              backgroundColor: codeBg,
+                              fontFamily: 'monospace',
+                            ),
+                            codeblockDecoration: BoxDecoration(
+                              color: codeBg,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
+                  ElevatedButton.icon(
+                    onPressed: _copyResultToClipboard,
+                    icon: const Icon(Icons.content_copy),
+                    label: const Text('Copy All'),
+                  ),
+                  const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: () {
                       widget.onApply(_result!);
@@ -676,8 +720,11 @@ class _FixAndGrammaScreenState extends State<FixAndGrammaScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_circle_outline,
-                          size: 64, color: Colors.grey.shade400),
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'Enter text and click "Fix & Get Alternatives"\nto see grammar corrections and style options',
